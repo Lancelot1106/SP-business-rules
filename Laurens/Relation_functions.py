@@ -37,7 +37,7 @@ DataSenderObject = DataSender()
 def getProduct(typelist, productID):
     """pakt de gegevens van het huidige product aan de hand van een list met items om te pakken,
     geeft een lijst met deze gegevens terug"""
-    print(typelist)
+
     liststring = ', '.join(typelist)
 
     con = DataSenderObject.openconnection()
@@ -45,10 +45,10 @@ def getProduct(typelist, productID):
 
     query = "SELECT {} FROM products a " \
             "FULL JOIN properties c ON a.idproducts = c.products_idproducts " \
-                "FULL JOIN category g ON a.idproducts = g.products_idproducts " \
-                "FULL JOIN subcategory k ON g.idcategory = k.category_idcategory " \
-                "WHERE (idproducts = '{}')".format(liststring, productID)
-    print(query)
+            "FULL JOIN category g ON a.idproducts = g.products_idproducts " \
+            "FULL JOIN subcategory k ON g.idcategory = k.category_idcategory " \
+            "WHERE (idproducts = '{}')".format(liststring, productID)
+
 
     cur.execute(query)
     con.commit()
@@ -57,15 +57,20 @@ def getProduct(typelist, productID):
     cur.close()
     con.close()
 
-    print(items)
-    return getSimilars(typelist, items, productID)
+    #print(items)
+    #stuff = items[0][3]
+    #floatstuff = float(stuff)
+    #intstuff = int(floatstuff)
+    #print(intstuff)
 
+    return getSimilars(typelist, items)
 
-
-def getSimilars(typelist, itemlist, productID):
+def getSimilars(typelist, itemlist):
     """zoekt naar soortgelijke product aan de hand van een lijst met specifieke gegevens,
     geeft een lijst met id's terug"""
 
+    newclause = whereClause(typelist, itemlist)
+    print(newclause)
     idlist = []
 
     con = DataSenderObject.openconnection()
@@ -77,8 +82,7 @@ def getSimilars(typelist, itemlist, productID):
                 "FULL JOIN properties c ON a.idproducts = c.products_idproducts " \
                 "FULL JOIN category g ON a.idproducts = g.products_idproducts " \
                 "FULL JOIN subcategory k ON g.idcategory = k.category_idcategory " \
-                "WHERE ({} = '{}')".format(typelist[i], itemlist[0][i])
-        print(query)
+                "WHERE ({})".format(newclause)
         cur.execute(query)
         con.commit()
         idlist.append(list(itertools.chain(*(cur.fetchall()))))
@@ -88,7 +92,40 @@ def getSimilars(typelist, itemlist, productID):
 
     return idlist
 
-#print(getProduct(itemsToGet,7674))
+def whereClause(typelist, itemlist):
+
+    clause = ""
+    firstinsert = True
+
+    for i in range(len(typelist)):
+        if typelist[i] != "brand":
+            if type(typelist[i]) != "decimal.Decimal":
+                if firstinsert:
+                    insert = "{} = '{}'".format(typelist[i], itemlist[0][i])
+                    clause += insert
+                else:
+                    insert = " and {} = '{}'".format(typelist[i], itemlist[0][i])
+                    clause += insert
+                firstinsert = False
+            else:
+                stuff = itemlist[0][i]
+                floatstuff = float(stuff)
+                intstuff = int(floatstuff)
+
+                if firstinsert:
+                    insert = "{} = '{}'".format(typelist[i], intstuff)
+                    clause += insert
+                else:
+                    insert = " and {} = '{}'".format(typelist[i], intstuff)
+                    clause += insert
+                firstinsert = False
+        else:
+            continue
+
+    return clause
+
+print(getProduct(itemsToGet, 7674))
+
 
 def createTable(ruletype):
     """maakt een tabel aan met de gegeven product id's. dit zijn altijd 5 id's (het product zelf en 4 recommendations
@@ -120,10 +157,6 @@ def createTable(ruletype):
     con.close()
 
 
-def fillTable(typelist, IDlist, weight):
-    """selecteerd welke id's uit de lijst worden genomen aan de hand van gewicht en vult de tabel"""
-
-    finalIDs = []
 
 
 
@@ -131,7 +164,6 @@ def fillTable(typelist, IDlist, weight):
 
 
 
-print(createTable("content"))
 
 
 """
@@ -156,7 +188,7 @@ def getVisitor(typelist, id):
     liststring = ', '.join(typelist)
 
     query = "SELECT {} FROM sessions a "\
-            "FULL JOIN orders c ON a.idsessions = c.sessions_idsessions "\ 
+            "FULL JOIN orders c ON a.idsessions = c.sessions_idsessions "\
             "FULL JOIN buids g ON a.idsessions = g.sessions_idsessions "\
             "FULL JOIN visitors k ON g.visitors_idvisitors = k.idvisitors "\
             "FULL JOIN has_sale m ON a.idsessions = m.sessions_idsessions "\
