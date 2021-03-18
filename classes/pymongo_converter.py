@@ -10,7 +10,7 @@ class Converter:
 
         '''
         self.client = pymongo.MongoClient('localhost', 27017)
-        self.database = self.client['huwebshop']
+        self.database = self.client['HuWebshop']
 
     @staticmethod
     def mongo_to_csv(fieldnames, filename, collection):
