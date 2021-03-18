@@ -2,36 +2,8 @@ import psycopg2
 from classes.send_data import DataSender
 import itertools
 
-"""
-Content Rules (bij bijvoorbeeld het product zelf)
 
-neem van het huidige product de:
-1. brand
-2. category
-3. subcategory
-4. subsubcategory
-5. gender (/doelgroep)
-6. prijs
 
-kijk voor elk nieuw product (lager gewicht = meer prioriteit):
-type          | gewicht
-brand = brand | 6
-category = category | 5
-subcategory = subcategory | 4
-subsub = subsub | 3
-gender = gender | 3
-folder_actief = true | 2, maximaal 1 product
-availability != 0 | 1
-prijs = prijs | 3/4
-"""
-
-weight = [ #type, weight, special rules
-    ["brand", "category", "subcategory", "subsubcategory", "gender", "doelgroep", "folder_actief", "availability", "price"],
-    [6, 5, 4, 3, 4, 3, 2, 1, 3],
-    ["", "", "", "", "", "", "max 1", "", ""]
-]
-
-itemsToGet = ["brand", "category", "doelgroep", "price"]
 DataSenderObject = DataSender()
 
 def getProduct(typelist, productID):
@@ -57,9 +29,9 @@ def getProduct(typelist, productID):
     cur.close()
     con.close()
 
-    return getSimilars(typelist, items, productID)
+    return items
 
-def getSimilars(typelist, itemlist, currentID):
+def getSimilars(typelist, itemlist):
     """zoekt naar soortgelijke product aan de hand van een lijst met specifieke gegevens,
     geeft een lijst met id's terug"""
 
@@ -85,7 +57,7 @@ def getSimilars(typelist, itemlist, currentID):
     cur.close()
     con.close()
 
-    return insertdata("content", idlist, currentID)
+    return idlist
 
 def whereClause(typelist, itemlist):
 
@@ -172,7 +144,6 @@ def insertdata(ruletype, idlist, currentID):
     cur.close()
     con.close()
 
-print(getProduct(itemsToGet, 7674))
 
 
 """
