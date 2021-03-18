@@ -57,40 +57,35 @@ def getProduct(typelist, productID):
     cur.close()
     con.close()
 
-    #print(items)
-    #stuff = items[0][3]
-    #floatstuff = float(stuff)
-    #intstuff = int(floatstuff)
-    #print(intstuff)
+    return getSimilars(typelist, items, productID)
 
-    return getSimilars(typelist, items)
-
-def getSimilars(typelist, itemlist):
+def getSimilars(typelist, itemlist, currentID):
     """zoekt naar soortgelijke product aan de hand van een lijst met specifieke gegevens,
     geeft een lijst met id's terug"""
 
     newclause = whereClause(typelist, itemlist)
-    print(newclause)
     idlist = []
 
     con = DataSenderObject.openconnection()
     cur = con.cursor()
 
-    for i in range(len(typelist)):
+    query = "SELECT idproducts FROM products a " \
+            "FULL JOIN properties c ON a.idproducts = c.products_idproducts " \
+            "FULL JOIN category g ON a.idproducts = g.products_idproducts " \
+            "FULL JOIN subcategory k ON g.idcategory = k.category_idcategory " \
+            "WHERE ({})".format(newclause)
+    cur.execute(query)
+    con.commit()
+    idlist.append(list(itertools.chain(*(cur.fetchall()))))
 
-        query = "SELECT idproducts FROM products a " \
-                "FULL JOIN properties c ON a.idproducts = c.products_idproducts " \
-                "FULL JOIN category g ON a.idproducts = g.products_idproducts " \
-                "FULL JOIN subcategory k ON g.idcategory = k.category_idcategory " \
-                "WHERE ({})".format(newclause)
-        cur.execute(query)
-        con.commit()
-        idlist.append(list(itertools.chain(*(cur.fetchall()))))
+    #moet worden uitgebreid om met steeds 1 where clausule minder te kunnen werken,
+    #mochten er zoveel voorwaardes zijn en geen resultaten om de voorwaardes te verminderen
+    #en toch nog resultaten krijgen
 
     cur.close()
     con.close()
 
-    return idlist
+    return insertdata("content", idlist, currentID)
 
 def whereClause(typelist, itemlist):
 
@@ -124,7 +119,7 @@ def whereClause(typelist, itemlist):
 
     return clause
 
-print(getProduct(itemsToGet, 7674))
+
 
 
 def createTable(ruletype):
@@ -158,12 +153,26 @@ def createTable(ruletype):
 
 
 
+def insertdata(ruletype, idlist, currentID):
 
+    firstidlist = idlist.pop()
+    try:
+        theID = f'{currentID}'
+        firstidlist.remove(theID)
+    except:
+        pass
 
+    query = "INSERT INTO {}Rules(current_item, recomm_one, recomm_two, recomm_three, recomm_four) VALUES ({}, {}, {}, {}, {})".format(ruletype, currentID, firstidlist[0], firstidlist[1], firstidlist[2], firstidlist[4])
+    #kan wellicht problemen gaan geven als de eerste lijst leeg was, wellicht pop if empty, meer voor vorige functie getsimilars
 
+    con = DataSenderObject.openconnection()
+    cur = con.cursor()
+    cur.execute(query)
+    con.commit()
+    cur.close()
+    con.close()
 
-
-
+print(getProduct(itemsToGet, 7674))
 
 
 """
