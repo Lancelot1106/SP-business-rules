@@ -91,9 +91,6 @@ def whereClause(typelist, itemlist):
 
     return clause
 
-
-
-
 def createTable(ruletype):
     """maakt een tabel aan met de gegeven product id's. dit zijn altijd 5 id's (het product zelf en 4 recommendations
     type is contentrules of collabrules."""
@@ -122,8 +119,6 @@ def createTable(ruletype):
     con.commit()
     cur.close()
     con.close()
-
-
 
 def insertdata(ruletype, idlist, currentID):
 
